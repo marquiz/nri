@@ -20,6 +20,9 @@ package nri.pkg.api.v1alpha1;
 
 option go_package = "github.com/containerd/nri/pkg/api;api";
 
+// TODO: see if Kubernetes Quantity type could be used
+//import "k8s.io/apimachinery/pkg/api/resource/generated.proto";
+
 // Runtime service is the public API runtimes expose for NRI plugins.
 // On this interface RPC requests are initiated by the plugin. This
 // only covers plugin registration and unsolicited container updates.
@@ -29,6 +32,8 @@ service Runtime {
     rpc RegisterPlugin(RegisterPluginRequest) returns (Empty);
     // UpdateContainers requests unsolicited updates to a set of containers.
     rpc UpdateContainers(UpdateContainersRequest) returns (UpdateContainersResponse);
+    // UpdateNodeResources updates the node resources.
+    rpc UpdateNodeResources(UpdateNodeResourcesRequest) returns (UpdateNodeResourcesResponse);
 }
 
 message RegisterPluginRequest {
@@ -50,6 +55,34 @@ message UpdateContainersResponse {
   repeated ContainerUpdate failed = 1;
 }
 
+message UpdateNodeResourcesRequest {
+    ResourceTopology resource_topology = 1;
+}
+
+message ResourceTopology {
+    repeated ResourceTopologyZone zones = 1;
+}
+
+message ResourceTopologyZone {
+    string name = 1;
+    string type = 2;
+    string parent = 3;
+    repeated ResourceTopologyCost costs = 4;
+    map<string, string> attributes = 5;
+    repeated ResourceTopologyResourceInfo resources = 6;
+}
+
+message ResourceTopologyCost {
+    string name = 1;
+    uint32 value = 2;
+}
+
+message ResourceTopologyResourceInfo {
+    string name = 1;
+    string capacity = 2;
+}
+
+message UpdateNodeResourcesResponse {}
 
 //
 // Plugin is the API NRI uses to interact with plugins. It is used to

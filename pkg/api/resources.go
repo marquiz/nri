@@ -23,6 +23,18 @@ import (
 	cri "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
+const (
+	ResourceTopologyZoneCore       = "Core"
+	ResourceTopologyZoneCacheGroup = "CacheGroup"
+	ResourceTopologyZoneCluster    = "Cluster"
+	ResourceTopologyZoneDie        = "Die"
+	ResourceTopologyZonePackage    = "Package"
+	ResourceTopologyZoneNUMANode   = "NUMANode"
+	ResourceTopologyZoneSystem     = "System"
+
+	ResourceTopologyAttributeCPUIDs = "cpu-ids"
+)
+
 // FromOCILinuxResources returns resources from an OCI runtime Spec.
 func FromOCILinuxResources(o *rspec.LinuxResources, _ map[string]string) *LinuxResources {
 	if o == nil {
