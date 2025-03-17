@@ -56,25 +56,28 @@ type SyncCB func(context.Context, []*PodSandbox, []*Container) ([]*ContainerUpda
 // UpdateFn is a container runtime function for unsolicited container updates.
 type UpdateFn func(context.Context, []*ContainerUpdate) ([]*ContainerUpdate, error)
 
+type UpdateNodeResourcesFn func(context.Context, *UpdateNodeResourcesRequest) error
+
 // Adaptation is the NRI abstraction for container runtime NRI adaptation/integration.
 type Adaptation struct {
 	sync.Mutex
-	name        string
-	version     string
-	dropinPath  string
-	pluginPath  string
-	socketPath  string
-	dontListen  bool
-	syncFn      SyncFn
-	updateFn    UpdateFn
-	clientOpts  []ttrpc.ClientOpts
-	serverOpts  []ttrpc.ServerOpt
-	listener    net.Listener
-	plugins     []*plugin
-	validators  []*plugin
-	builtin     []*builtin.BuiltinPlugin
-	syncLock    sync.RWMutex
-	wasmService *api.PluginPlugin
+	name                  string
+	version               string
+	dropinPath            string
+	pluginPath            string
+	socketPath            string
+	dontListen            bool
+	syncFn                SyncFn
+	updateFn              UpdateFn
+	updateNodeResourcesFn UpdateNodeResourcesFn
+	clientOpts            []ttrpc.ClientOpts
+	serverOpts            []ttrpc.ServerOpt
+	listener              net.Listener
+	plugins               []*plugin
+	validators            []*plugin
+	builtin               []*builtin.BuiltinPlugin
+	syncLock              sync.RWMutex
+	wasmService           *api.PluginPlugin
 }
 
 var (
@@ -145,7 +148,7 @@ func WithDefaultValidator(cfg *validator.DefaultValidatorConfig) Option {
 }
 
 // New creates a new NRI Runtime.
-func New(name, version string, syncFn SyncFn, updateFn UpdateFn, opts ...Option) (*Adaptation, error) {
+func New(name, version string, syncFn SyncFn, updateFn UpdateFn, updateNodeResources UpdateNodeResourcesFn, opts ...Option) (*Adaptation, error) {
 	var err error
 
 	if syncFn == nil {
@@ -153,6 +156,9 @@ func New(name, version string, syncFn SyncFn, updateFn UpdateFn, opts ...Option)
 	}
 	if updateFn == nil {
 		return nil, fmt.Errorf("failed to create NRI adaptation, nil UpdateFn")
+	}
+	if updateNodeResources == nil {
+		return nil, fmt.Errorf("failed to create NRI adaptation, nil UpdateNodeResourcesFn")
 	}
 
 	wasmWithCloseOnContextDone := func(ctx context.Context) (wazero.Runtime, error) {
@@ -175,15 +181,16 @@ func New(name, version string, syncFn SyncFn, updateFn UpdateFn, opts ...Option)
 	}
 
 	r := &Adaptation{
-		name:        name,
-		version:     version,
-		syncFn:      syncFn,
-		updateFn:    updateFn,
-		pluginPath:  DefaultPluginPath,
-		dropinPath:  DefaultPluginConfigPath,
-		socketPath:  DefaultSocketPath,
-		syncLock:    sync.RWMutex{},
-		wasmService: wasmPlugins,
+		name:                  name,
+		version:               version,
+		syncFn:                syncFn,
+		updateFn:              updateFn,
+		updateNodeResourcesFn: updateNodeResources,
+		pluginPath:            DefaultPluginPath,
+		dropinPath:            DefaultPluginConfigPath,
+		socketPath:            DefaultSocketPath,
+		syncLock:              sync.RWMutex{},
+		wasmService:           wasmPlugins,
 	}
 
 	for _, o := range opts {
@@ -433,6 +440,13 @@ func (r *Adaptation) validateContainerAdjustment(ctx context.Context, req *Valid
 	}
 
 	return rpl, nil
+}
+
+func (r *Adaptation) updateNodeResources(ctx context.Context, req *UpdateNodeResourcesRequest) error {
+	r.Lock()
+	defer r.Unlock()
+
+	return r.updateNodeResourcesFn(ctx, req)
 }
 
 // Start up pre-installed plugins.
