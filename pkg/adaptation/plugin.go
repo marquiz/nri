@@ -430,6 +430,13 @@ func (p *plugin) UpdateContainers(ctx context.Context, req *UpdateContainersRequ
 	}, err
 }
 
+func (p *plugin) UpdateNodeResources(ctx context.Context, req *UpdateNodeResourcesRequest) (*UpdateNodeResourcesResponse, error) {
+	log.Infof(ctx, "plugin %q requested node resources update", p.name())
+
+	err := p.r.updateNodeResources(ctx, req)
+	return &UpdateNodeResourcesResponse{}, err
+}
+
 // configure the plugin and subscribe it for the events it requested.
 func (p *plugin) configure(ctx context.Context, name, version, config string) (err error) {
 	ctx, cancel := context.WithTimeout(ctx, getPluginRequestTimeout())
