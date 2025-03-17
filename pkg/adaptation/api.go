@@ -28,10 +28,12 @@ import (
 //
 //nolint:revive // revive thinks the comment is for the exported type below
 type (
-	RegisterPluginRequest    = api.RegisterPluginRequest
-	RegisterPluginResponse   = api.Empty
-	UpdateContainersRequest  = api.UpdateContainersRequest
-	UpdateContainersResponse = api.UpdateContainersResponse
+	RegisterPluginRequest       = api.RegisterPluginRequest
+	RegisterPluginResponse      = api.Empty
+	UpdateContainersRequest     = api.UpdateContainersRequest
+	UpdateContainersResponse    = api.UpdateContainersResponse
+	UpdateNodeResourcesRequest  = api.UpdateNodeResourcesRequest
+	UpdateNodeResourcesResponse = api.UpdateNodeResourcesResponse
 
 	ConfigureRequest    = api.ConfigureRequest
 	ConfigureResponse   = api.ConfigureResponse
