@@ -12,6 +12,7 @@ import (
 type RuntimeService interface {
 	RegisterPlugin(context.Context, *RegisterPluginRequest) (*Empty, error)
 	UpdateContainers(context.Context, *UpdateContainersRequest) (*UpdateContainersResponse, error)
+	UpdateNodeResources(context.Context, *UpdateNodeResourcesRequest) (*UpdateNodeResourcesResponse, error)
 }
 
 func RegisterRuntimeService(srv *ttrpc.Server, svc RuntimeService) {
@@ -30,6 +31,13 @@ func RegisterRuntimeService(srv *ttrpc.Server, svc RuntimeService) {
 					return nil, err
 				}
 				return svc.UpdateContainers(ctx, &req)
+			},
+			"UpdateNodeResources": func(ctx context.Context, unmarshal func(interface{}) error) (interface{}, error) {
+				var req UpdateNodeResourcesRequest
+				if err := unmarshal(&req); err != nil {
+					return nil, err
+				}
+				return svc.UpdateNodeResources(ctx, &req)
 			},
 		},
 	})
@@ -56,6 +64,14 @@ func (c *runtimeClient) RegisterPlugin(ctx context.Context, req *RegisterPluginR
 func (c *runtimeClient) UpdateContainers(ctx context.Context, req *UpdateContainersRequest) (*UpdateContainersResponse, error) {
 	var resp UpdateContainersResponse
 	if err := c.client.Call(ctx, "nri.pkg.api.v1alpha1.Runtime", "UpdateContainers", req, &resp); err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}
+
+func (c *runtimeClient) UpdateNodeResources(ctx context.Context, req *UpdateNodeResourcesRequest) (*UpdateNodeResourcesResponse, error) {
+	var resp UpdateNodeResourcesResponse
+	if err := c.client.Call(ctx, "nri.pkg.api.v1alpha1.Runtime", "UpdateNodeResources", req, &resp); err != nil {
 		return nil, err
 	}
 	return &resp, nil

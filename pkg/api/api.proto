@@ -20,6 +20,9 @@ package nri.pkg.api.v1alpha1;
 
 option go_package = "github.com/containerd/nri/pkg/api;api";
 
+// TODO: see if Kubernetes Quantity type could be used
+//import "k8s.io/apimachinery/pkg/api/resource/generated.proto";
+
 // Runtime service is the public API runtimes expose for NRI plugins.
 // On this interface RPC requests are initiated by the plugin. This
 // only covers plugin registration and unsolicited container updates.
@@ -29,6 +32,8 @@ service Runtime {
     rpc RegisterPlugin(RegisterPluginRequest) returns (Empty);
     // UpdateContainers requests unsolicited updates to a set of containers.
     rpc UpdateContainers(UpdateContainersRequest) returns (UpdateContainersResponse);
+    // UpdateNodeResources updates the node resources.
+    rpc UpdateNodeResources(UpdateNodeResourcesRequest) returns (UpdateNodeResourcesResponse);
 }
 
 message RegisterPluginRequest {
@@ -50,6 +55,42 @@ message UpdateContainersResponse {
   repeated ContainerUpdate failed = 1;
 }
 
+message UpdateNodeResourcesRequest {
+  repeated ResourceCpuInfo cpu_info = 1;
+  repeated ResourceNumaNodeInfo numa_node_info = 2;
+  ResourceSwapInfo swap_info = 3;
+}
+
+// ResourceCpuInfo provides information about on logical CPU
+message ResourceCpuInfo {
+  int64 id = 1;
+  int64 core_id = 2;
+  // cpu_group marks desired cpu grouping between socket (package) and core levels
+  int64 cpu_group_id = 3;
+  int64 socket_id = 4;
+}
+
+message ResourceNumaNodeInfo {
+  int64 id = 1;
+  // resources is a list of resources that are local to this numa node,
+  // expected to contain only memory or hugepages, other resources are ignored
+  repeated ResourceTopologyResourceInfo resources = 2;
+  // distance is the distance vector, i.e. the distance from this node to all other nodes
+  repeated int64 distance = 3;
+    // cpu_ids is a list of logical CPU IDs that are local to this numa node
+  repeated int64 cpu_ids = 4;
+}
+
+message ResourceSwapInfo {
+  int64 capacity = 1;
+}
+
+message ResourceTopologyResourceInfo {
+  string name = 1;
+  int64 capacity = 2;
+}
+
+message UpdateNodeResourcesResponse {}
 
 //
 // Plugin is the API NRI uses to interact with plugins. It is used to
