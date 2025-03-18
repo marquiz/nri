@@ -910,8 +910,7 @@ func (stub *stub) setupHandlers() error {
 	}
 
 	if stub.events == 0 {
-		return fmt.Errorf("internal error: plugin %T does not implement any NRI request handlers",
-			stub.plugin)
+		log.Infof(noCtx, "plugin %T does not implement any NRI request handlers", stub.plugin)
 	}
 
 	return nil
