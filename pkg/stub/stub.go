@@ -163,6 +163,9 @@ type Stub interface {
 	// UpdateContainer requests unsolicited updates to containers.
 	UpdateContainers([]*api.ContainerUpdate) ([]*api.ContainerUpdate, error)
 
+	// UpdateNodeResources requests update of the node resources.
+	UpdateNodeResources(*api.UpdateNodeResourcesRequest) error
+
 	// RegistrationTimeout returns the registration timeout for the stub.
 	// This is the default timeout if the plugin has not been started or
 	// the timeout received in the Configure request otherwise.
@@ -607,6 +610,17 @@ func (stub *stub) UpdateContainers(update []*api.ContainerUpdate) ([]*api.Contai
 		return rpl.Failed, err
 	}
 	return nil, err
+}
+
+// UpdateNodeResources requests an update to the node resources.
+func (stub *stub) UpdateNodeResources(req *api.UpdateNodeResourcesRequest) error {
+	if stub.runtime == nil {
+		return ErrNoService
+	}
+
+	ctx := context.Background()
+	_, err := stub.runtime.UpdateNodeResources(ctx, req)
+	return err
 }
 
 // Configure the plugin.
