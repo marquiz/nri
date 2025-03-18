@@ -51,7 +51,8 @@ PLUGINS := \
 	$(BIN_PATH)/template \
 	$(BIN_PATH)/wasm \
 	$(BIN_PATH)/network-device-injector \
-	$(BIN_PATH)/network-logger
+	$(BIN_PATH)/network-logger \
+	$(BIN_PATH)/noderesourceupdater
 
 ifneq ($(V),1)
   Q := @
@@ -117,6 +118,10 @@ $(BIN_PATH)/wasm build/bin/wasm: FORCE
 	$(Q)echo "Building $@..."; \
 	mkdir -p $(BIN_PATH) && \
 	GOOS=wasip1 GOARCH=wasm $(GO_BUILD) -C plugins/wasm -o $(abspath $@) $(GO_BUILD_FLAGS) -buildmode=c-shared .
+
+$(BIN_PATH)/noderesourceupdater: $(wildcard plugins/noderesourceupdater/*.go)
+	$(Q)echo "Building $@..."; \
+	cd $(dir $<) && $(GO_BUILD) -o $@ .
 
 #
 # test targets
