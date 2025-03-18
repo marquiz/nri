@@ -1,0 +1,8 @@
+#
+# An example config file for the resource update demo
+#
+cpusPerCore: 2
+coresPerSocket: 4
+memPerSocket: 1000000000
+numSockets: 1
+swapSize: 0
