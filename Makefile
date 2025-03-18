@@ -56,7 +56,8 @@ PLUGINS := \
 	$(BIN_PATH)/ulimit-adjuster \
 	$(BIN_PATH)/v010-adapter \
 	$(BIN_PATH)/template \
-	$(BIN_PATH)/wasm
+	$(BIN_PATH)/wasm \
+	$(BIN_PATH)/noderesourceupdater
 
 
 ifneq ($(V),1)
@@ -145,6 +146,10 @@ $(BIN_PATH)/wasm: $(wildcard plugins/wasm/*.go)
 	mkdir -p $(BIN_PATH) && \
 	$(call tinygo-docker-build,$@)
 endif
+
+$(BIN_PATH)/noderesourceupdater: $(wildcard plugins/noderesourceupdater/*.go)
+	$(Q)echo "Building $@..."; \
+	cd $(dir $<) && $(GO_BUILD) -o $@ .
 
 #
 # test targets

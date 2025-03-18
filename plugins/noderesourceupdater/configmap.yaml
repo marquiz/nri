@@ -1,0 +1,15 @@
+#
+# An example configmap for the resource update demo
+#
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: resource-topology
+  namespace: default
+data:
+  resources: |
+    cpusPerCore: 2
+    coresPerSocket: 4
+    memPerSocket: 1000000000
+    numSockets: 1
+    swapSize: 0
