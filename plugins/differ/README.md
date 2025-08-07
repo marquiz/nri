@@ -6,6 +6,23 @@ The plugin can register itself multiple times at multiple indices, so a single
 differ instance can be used to track and show step-by-step all the changes
 made to a container.
 
+## Deployment
+
+The NRI repository contains kustomize overlays for this plugin at
+[contrib/kustomize/differ](../../contrib/kustomize/differ).
+
+Deploy the latest release with:
+
+```bash
+kubectl apply -k https://github.com/containerd/nri/contrib/kustomize/differ
+```
+
+Deploy the latest development build from tip of the main branch with:
+
+```bash
+kubectl apply -k https://github.com/containerd/nri/contrib/kustomize/differ/unstable
+```
+
 ## Testing
 
 You can test this plugin by registering it to the desired indices (for

@@ -8,6 +8,23 @@ receives. It is not guaranteed to be 100% identical to the data provided by
 the original interface but believed to be close enough to allow old plugins
 to function.
 
+## Deployment
+
+The NRI repository contains kustomize overlays for this plugin at
+[contrib/kustomize/v010-adapter](../../contrib/kustomize/v010-adapter).
+
+Deploy the latest release with:
+
+```bash
+kubectl apply -k https://github.com/containerd/nri/contrib/kustomize/v010-adapter
+```
+
+Deploy the latest development build from tip of the main branch with:
+
+```bash
+kubectl apply -k https://github.com/containerd/nri/contrib/kustomize/v010-adapter/unstable
+```
+
 ## Testing
 
 You can enable backward compatibility by compiling this plugin, installing,

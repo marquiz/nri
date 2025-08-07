@@ -47,6 +47,23 @@ the rest of the parameters are optional.
 The plugin only injects interfaces on the Pod network namespace for which the containers are attached when created,
 for more advanced networking configuration like routing, traffic redirection or dynamic address configuration new plugins can be created.
 
+## Deployment
+
+The NRI repository contains kustomize overlays for this plugin at
+[contrib/kustomize/network-device-injector](../../contrib/kustomize/network-device-injector).
+
+Deploy the latest release with:
+
+```bash
+kubectl apply -k https://github.com/containerd/nri/contrib/kustomize/network-device-injector
+```
+
+Deploy the latest development build from tip of the main branch with:
+
+```bash
+kubectl apply -k https://github.com/containerd/nri/contrib/kustomize/network-device-injector/unstable
+```
+
 ## Testing
 
 You can test this plugin using a kubernetes cluster/node with a container
