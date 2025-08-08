@@ -421,6 +421,7 @@ The following sample plugins exist for NRI:
   - [WebAssembly plugin](plugins/wasm)
   - [template](plugins/template)
 
+
 Please see the documentation of these plugins for further details
 about what and how each of these plugins can be used for.
 
