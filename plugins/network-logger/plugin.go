@@ -78,14 +78,13 @@ func (p *plugin) RemovePodSandbox(_ context.Context, pod *api.PodSandbox) error 
 
 func (p *plugin) onClose() {
 	log.Infof("Connection to the runtime lost, exiting...")
-	os.Exit(0)
+	os.Exit(1)
 }
 
 func main() {
 	var (
-		pluginName string
-		pluginIdx  string
-		err        error
+		pluginIdx string
+		err       error
 	)
 
 	log = logrus.StandardLogger()
@@ -93,16 +92,12 @@ func main() {
 		PadLevelText: true,
 	})
 
-	flag.StringVar(&pluginName, "network-logger", "", "plugin name to register to NRI")
 	flag.StringVar(&pluginIdx, "idx", "", "plugin index to register to NRI")
 	flag.Parse()
 
 	p := &plugin{}
 	opts := []stub.Option{
 		stub.WithOnClose(p.onClose),
-	}
-	if pluginName != "" {
-		opts = append(opts, stub.WithPluginName(pluginName))
 	}
 	if pluginIdx != "" {
 		opts = append(opts, stub.WithPluginIdx(pluginIdx))

@@ -424,6 +424,14 @@ The following sample plugins exist for NRI:
 Please see the documentation of these plugins for further details
 about what and how each of these plugins can be used for.
 
+Ready-built container images for these plugins are available at
+ghcr.io/containerd/nri/plugins/<plugin>.
+
+Minimal [kustomize](https://kubernetes.io/docs/tasks/manage-kubernetes-objects/kustomization/)
+overlays for deploying the sample are available at
+[contrib/kustomize](contrib/kustomize). See plugin-specific documentation for
+detailed examples.
+
 ### WebAssembly support
 
 The NRI supports WebAssembly plugins through a SDK provided by

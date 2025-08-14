@@ -7,3 +7,20 @@ and illustrative purposes.
 
 Note that the [differ plugin](../differ) is probably better suited for actual
 debugging purposes than this simple logger.
+
+## Deployment
+
+The NRI repository contains kustomize overlays for this plugin at
+[contrib/kustomize/logger](../../contrib/kustomize/logger).
+
+Deploy the latest release with:
+
+```bash
+kubectl apply -k https://github.com/containerd/nri/contrib/kustomize/logger
+```
+
+Deploy the latest development build from tip of the main branch with:
+
+```bash
+kubectl apply -k https://github.com/containerd/nri/contrib/kustomize/logger/unstable
+```

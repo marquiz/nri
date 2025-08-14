@@ -101,6 +101,23 @@ The annotation value syntax for mount injection is
     ...
 ```
 
+## Deployment
+
+The NRI repository contains kustomize overlays for this plugin at
+[contrib/kustomize/device-injector](../../contrib/kustomize/device-injector).
+
+Deploy the latest release with:
+
+```bash
+kubectl apply -k https://github.com/containerd/nri/contrib/kustomize/device-injector
+```
+
+Deploy the latest development build from tip of the main branch with:
+
+```bash
+kubectl apply -k https://github.com/containerd/nri/contrib/kustomize/device-injector/unstable
+```
+
 ## Testing
 
 You can test this plugin using a kubernetes cluster/node with a container
