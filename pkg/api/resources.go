@@ -189,6 +189,7 @@ func (r *LinuxResources) Copy() *LinuxResources {
 	}
 	o.BlockioClass = String(r.BlockioClass)
 	o.RdtClass = String(r.RdtClass)
+
 	for _, d := range r.Devices {
 		o.Devices = append(o.Devices, &LinuxDeviceCgroup{
 			Allow:  d.Allow,
@@ -200,4 +201,16 @@ func (r *LinuxResources) Copy() *LinuxResources {
 	}
 
 	return o
+}
+
+// Copy creates a copy of the RDT configuration.
+func (r *LinuxRdt) Copy() *LinuxRdt {
+	if r == nil {
+		return nil
+	}
+	return &LinuxRdt{
+		ClosId:           String(r.ClosId),
+		Schemata:         RepeatedString(r.Schemata),
+		EnableMonitoring: Bool(r.EnableMonitoring),
+	}
 }
