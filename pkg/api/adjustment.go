@@ -297,6 +297,12 @@ func (a *ContainerAdjustment) SetLinuxRDTEnableMonitoring(value bool) {
 	a.Linux.Rdt.EnableMonitoring = Bool(value)
 }
 
+// RemoveLinuxRdt records the removal of the RDT configuration.
+func (a *ContainerAdjustment) RemoveLinuxRDT() {
+	a.initLinuxRdt()
+	a.Linux.Rdt.Remove = true
+}
+
 // AddLinuxUnified sets a cgroupv2 unified resource.
 func (a *ContainerAdjustment) AddLinuxUnified(key, value string) {
 	a.initLinuxResourcesUnified()
