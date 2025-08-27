@@ -27,6 +27,7 @@ import (
 	rspec "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/opencontainers/runtime-tools/generate"
 
+	"github.com/containerd/nri/pkg/api"
 	nri "github.com/containerd/nri/pkg/api"
 )
 
@@ -344,6 +345,10 @@ func (g *Generator) AdjustRdt(r *nri.LinuxRdt) {
 		return
 	}
 
+	if r.IsMarkedForRemoval() {
+		g.ClearLinuxIntelRdt()
+	}
+
 	g.AdjustRdtClosID(r.ClosId.Get())
 	g.AdjustRdtSchemata(r.Schemata.Get())
 	g.AdjustRdtEnableMonitoring(r.EnableMonitoring.Get())
@@ -352,7 +357,7 @@ func (g *Generator) AdjustRdt(r *nri.LinuxRdt) {
 // AdjustRdtClosID adjusts the RDT CLOS id in the OCI Spec.
 func (g *Generator) AdjustRdtClosID(value *string) {
 	if value != nil {
-		g.SetLinuxIntelRdtClosID(*value)
+		g.SetLinuxIntelRdtClosID(api.ClearRDTRemovalMarker(*value))
 	}
 }
 

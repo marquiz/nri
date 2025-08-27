@@ -16,6 +16,8 @@
 
 package api
 
+import "strings"
+
 // DupStringSlice creates a copy of a string slice.
 func DupStringSlice(in []string) []string {
 	if in == nil {
@@ -68,4 +70,26 @@ func ClearRemovalMarker(key string) string {
 		return key[1:]
 	}
 	return key
+}
+
+// RDTMarkForRemoval is a special prefix for the ClosID field. It is used to
+// indicate that the RDT configuration is to be removed.
+const RDTMarkForRemoval = "-/"
+
+func IsRDTMarkedForRemoval(closID string) bool {
+	if strings.HasPrefix(closID, RDTMarkForRemoval) {
+		return true
+	}
+	return false
+}
+
+func MarkRDTForRemoval(closID string) string {
+	return RDTMarkForRemoval + closID
+}
+
+func ClearRDTRemovalMarker(closID string) string {
+	if strings.HasPrefix(closID, RDTMarkForRemoval) {
+		return strings.TrimPrefix(closID, RDTMarkForRemoval)
+	}
+	return closID
 }

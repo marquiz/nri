@@ -464,11 +464,18 @@ func (r *result) adjustRdt(rdt *LinuxRdt, plugin string) error {
 
 	id := r.request.create.Container.Id
 
+	if rdt.IsMarkedForRemoval() {
+		r.owners.ClearRdt(id, plugin)
+		r.reply.adjust.Linux.Rdt = &LinuxRdt{}
+	}
+
 	if v := rdt.GetClosId(); v != nil {
-		if err := r.owners.ClaimRdtClosID(id, plugin); err != nil {
-			return err
+		if v2 := api.ClearRDTRemovalMarker(v.GetValue()); v2 != "" {
+			if err := r.owners.ClaimRdtClosID(id, plugin); err != nil {
+				return err
+			}
+			r.reply.adjust.Linux.Rdt.ClosId = String(v)
 		}
-		r.reply.adjust.Linux.Rdt.ClosId = String(v.GetValue())
 	}
 	if v := rdt.GetSchemata(); v != nil {
 		if err := r.owners.ClaimRdtSchemata(id, plugin); err != nil {

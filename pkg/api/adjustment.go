@@ -16,7 +16,9 @@
 
 package api
 
-import "slices"
+import (
+	"slices"
+)
 
 //
 // Notes:
@@ -282,6 +284,12 @@ func (a *ContainerAdjustment) SetLinuxRDTClass(value string) {
 // SetLinuxRDTClosID records setting the RDT CLOS id for a container.
 func (a *ContainerAdjustment) SetLinuxRDTClosID(value string) {
 	a.initLinuxRdt()
+	if v := a.Linux.Rdt.ClosId; v != nil {
+		if IsRDTMarkedForRemoval(v.GetValue()) {
+			a.Linux.Rdt.ClosId = String(MarkRDTForRemoval(value))
+			return
+		}
+	}
 	a.Linux.Rdt.ClosId = String(value)
 }
 
@@ -295,6 +303,14 @@ func (a *ContainerAdjustment) SetLinuxRDTSchemata(value []string) {
 func (a *ContainerAdjustment) SetLinuxRDTEnableMonitoring(value bool) {
 	a.initLinuxRdt()
 	a.Linux.Rdt.EnableMonitoring = Bool(value)
+}
+
+// RemoveLinuxRdt records the removal of the RDT configuration.
+func (a *ContainerAdjustment) RemoveLinuxRDT() {
+	a.initLinux()
+	a.Linux.Rdt = &LinuxRdt{
+		ClosId: String(RDTMarkForRemoval),
+	}
 }
 
 // AddLinuxUnified sets a cgroupv2 unified resource.
