@@ -43,3 +43,13 @@ Deploy the latest development build from tip of the main branch with:
 ```bash
 kubectl apply -k https://github.com/containerd/nri/contrib/kustomize/rdt/unstable
 ```
+
+## Command line flags
+
+The plugin supports the following command line flags:
+
+| Flag               | Default | Description                                                                                                                  |
+|--------------------|---------|------------------------------------------------------------------------------------------------------------------------------|
+| `-idx`             | *empty* | Plugin index to register to NRI.                                                                                             |
+| `-verbose`         | false | Enable verbose logging.                                                                                                        |
+| `-allowed-fields`  | all     | Comma-separated list of allowed IntelRdt fields to adjust. Possible values: `closid`, `enablemonitoring`, `schemata`, `all`. |

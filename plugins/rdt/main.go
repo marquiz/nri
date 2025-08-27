@@ -19,7 +19,9 @@ package main
 import (
 	"context"
 	"flag"
+	"maps"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -31,24 +33,39 @@ import (
 )
 
 type plugin struct {
-	stub stub.Stub
-	l    *logrus.Logger
+	stub          stub.Stub
+	l             *logrus.Logger
+	enabledFields map[string]bool
 }
 
+type fieldHandlerFunc func(ctx context.Context, adjustment *api.ContainerAdjustment, value string) error
+
+var fieldHandlers = map[string]fieldHandlerFunc{
+	"closid":           adjustClosID,
+	"schemata":         adjustSchemata,
+	"enablemonitoring": adjustEnableMonitoring,
+}
+
+var fieldHandlerNames = slices.Sorted(maps.Keys(fieldHandlers))
+
 func main() {
-	l := logrus.StandardLogger()
-	l.SetFormatter(&logrus.TextFormatter{
+	p := &plugin{l: logrus.StandardLogger()}
+	p.l.SetFormatter(&logrus.TextFormatter{
 		PadLevelText: true,
 	})
 
 	pluginIdx := flag.String("idx", "", "plugin index to register to NRI")
+	flag.Func("allowed-fields", "comma-separated list rdt fields that the plugin is allowed to modify ("+strings.Join(fieldHandlerNames, ", ")+", all; default: all)", func(s string) error {
+		p.parseAllowedFields(s)
+		return nil
+	})
 	verbose := flag.Bool("verbose", false, "enable verbose logging")
 
 	flag.Parse()
-	l.WithField("verbose", *verbose).Info("Starting plugin")
+	p.l.WithField("verbose", *verbose).Info("Starting plugin")
 
 	if *verbose {
-		l.SetLevel(logrus.DebugLevel)
+		p.l.SetLevel(logrus.DebugLevel)
 	}
 
 	opts := []stub.Option{}
@@ -56,16 +73,37 @@ func main() {
 		opts = append(opts, stub.WithPluginIdx(*pluginIdx))
 	}
 
-	p := &plugin{l: l}
 	var err error
 	if p.stub, err = stub.New(p, opts...); err != nil {
-		l.Fatalf("Failed to create plugin stub: %v", err)
+		p.l.Fatalf("Failed to create plugin stub: %v", err)
 	}
 
 	if err := p.stub.Run(context.Background()); err != nil {
-		l.Errorf("Plugin exited with error %v", err)
+		p.l.Errorf("Plugin exited with error %v", err)
 		os.Exit(1)
 	}
+}
+
+func (p *plugin) parseAllowedFields(s string) {
+	enabled := map[string]bool{}
+	for _, f := range strings.Split(s, ",") {
+		f = strings.TrimSpace(f)
+		if f == "" {
+			continue
+		}
+		if f == "all" {
+			for name := range fieldHandlers {
+				enabled[name] = true
+			}
+			continue
+		}
+		if _, ok := fieldHandlers[f]; ok {
+			enabled[f] = true
+		} else {
+			p.l.WithField("field", f).Info("Unknown rdt field in -allowed-fields, must be one of: all, ", strings.Join(fieldHandlerNames, ", "))
+		}
+	}
+	p.enabledFields = enabled
 }
 
 func (p *plugin) CreateContainer(ctx context.Context, pod *api.PodSandbox, container *api.Container) (*api.ContainerAdjustment, []*api.ContainerUpdate, error) {
@@ -80,45 +118,47 @@ func (p *plugin) CreateContainer(ctx context.Context, pod *api.PodSandbox, conta
 	log.G(ctx).Debug("Create container")
 
 	adjustment := &api.ContainerAdjustment{}
-	err := adjustRdt(ctx, adjustment, container.Name, pod.Annotations)
+	err := p.adjustRdt(ctx, adjustment, container.Name, pod.Annotations)
 	if err != nil {
 		return nil, nil, err
 	}
 	return adjustment, nil, nil
 }
 
-func adjustRdt(ctx context.Context, adjustment *api.ContainerAdjustment, container string, annotations map[string]string) error {
+func (p *plugin) adjustRdt(ctx context.Context, adjustment *api.ContainerAdjustment, container string, annotations map[string]string) error {
 	rdtAnnotationKeySuffix := ".rdt.noderesource.dev/container." + container
 
 	for k, v := range annotations {
 		if strings.HasSuffix(k, rdtAnnotationKeySuffix) {
 			fieldName := strings.TrimSuffix(k, rdtAnnotationKeySuffix)
-			switch fieldName {
-			case "closid":
-				adjustClosID(ctx, adjustment, v)
-			case "schemata":
-				adjustSchemata(ctx, adjustment, v)
-			case "enablemonitoring":
-				if err := adjustEnableMonitoring(ctx, adjustment, v); err != nil {
+			if p.enabledFields[fieldName] {
+				if err := fieldHandlers[fieldName](ctx, adjustment, v); err != nil {
 					return err
 				}
-			default:
-				log.G(ctx).WithField("field_name", fieldName).Info("Unknown rdt field")
+			} else {
+				if _, ok := fieldHandlers[fieldName]; ok {
+					log.G(ctx).WithField("field_name", fieldName).Info("Field not allowed to be modified (disabled with -allowed-fields)")
+				} else {
+					log.G(ctx).WithField("field_name", fieldName).Info("Unknown rdt field")
+					continue
+				}
 			}
 		}
 	}
 	return nil
 }
 
-func adjustClosID(ctx context.Context, adjustment *api.ContainerAdjustment, value string) {
+func adjustClosID(ctx context.Context, adjustment *api.ContainerAdjustment, value string) error {
 	log.G(ctx).WithField("closid", value).Info("Adjust closid")
 	adjustment.SetLinuxRDTClosID(value)
+	return nil
 }
 
-func adjustSchemata(ctx context.Context, adjustment *api.ContainerAdjustment, value string) {
+func adjustSchemata(ctx context.Context, adjustment *api.ContainerAdjustment, value string) error {
 	schemata := strings.Split(value, ",")
 	log.G(ctx).WithField("schemata", schemata).Info("Adjust schemata")
 	adjustment.SetLinuxRDTSchemata(schemata)
+	return nil
 }
 
 func adjustEnableMonitoring(ctx context.Context, adjustment *api.ContainerAdjustment, value string) error {
