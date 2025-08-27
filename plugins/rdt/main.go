@@ -22,6 +22,7 @@ import (
 	"maps"
 	"os"
 	"slices"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -41,6 +42,7 @@ type plugin struct {
 type fieldHandlerFunc func(ctx context.Context, adjustment *api.ContainerAdjustment, value string) error
 
 var fieldHandlers = map[string]fieldHandlerFunc{
+	"remove":           removeRdt,
 	"closid":           adjustClosID,
 	"schemata":         adjustSchemata,
 	"enablemonitoring": adjustEnableMonitoring,
@@ -128,13 +130,17 @@ func (p *plugin) CreateContainer(ctx context.Context, pod *api.PodSandbox, conta
 func (p *plugin) adjustRdt(ctx context.Context, adjustment *api.ContainerAdjustment, container string, annotations map[string]string) error {
 	rdtAnnotationKeySuffix := ".rdt.noderesource.dev/container." + container
 
+	type handler struct {
+		name  string
+		fn    fieldHandlerFunc
+		value string
+	}
+	handlers := []handler{}
 	for k, v := range annotations {
 		if strings.HasSuffix(k, rdtAnnotationKeySuffix) {
 			fieldName := strings.TrimSuffix(k, rdtAnnotationKeySuffix)
 			if p.enabledFields[fieldName] {
-				if err := fieldHandlers[fieldName](ctx, adjustment, v); err != nil {
-					return err
-				}
+				handlers = append(handlers, handler{name: fieldName, fn: fieldHandlers[fieldName], value: v})
 			} else {
 				if _, ok := fieldHandlers[fieldName]; ok {
 					log.G(ctx).WithField("field_name", fieldName).Info("Field not allowed to be modified (disabled with -allowed-fields)")
@@ -144,6 +150,35 @@ func (p *plugin) adjustRdt(ctx context.Context, adjustment *api.ContainerAdjustm
 				}
 			}
 		}
+	}
+
+	sort.Slice(handlers, func(i, j int) bool {
+		if handlers[i].name == "remove" {
+			return true
+		}
+		if handlers[j].name == "remove" {
+			return false
+		}
+		return handlers[i].name < handlers[j].name
+	})
+
+	for _, h := range handlers {
+		if err := h.fn(ctx, adjustment, h.value); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func removeRdt(ctx context.Context, adjustment *api.ContainerAdjustment, value string) error {
+	remove, err := strconv.ParseBool(value)
+	if err != nil {
+		return err
+	}
+	if remove {
+		log.G(ctx).Info("Remove RDT config")
+		adjustment.RemoveLinuxRDT()
 	}
 	return nil
 }
