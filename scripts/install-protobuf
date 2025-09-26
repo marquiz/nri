@@ -50,13 +50,14 @@ ppc64le)
 	;;
 *)
 	wget -O "$PROTOBUF_DIR/protobuf" "https://github.com/protocolbuffers/protobuf/releases/download/v$PROTOBUF_VERSION/protobuf-cpp-$PROTOBUF_VERSION.zip"
+    mkdir -p "$INSTALL_DIR/src/protobuf"
 	unzip "$PROTOBUF_DIR/protobuf" -d "$INSTALL_DIR/src/protobuf"
 	cd "$INSTALL_DIR/src/protobuf/protobuf-$PROTOBUF_VERSION"
 	./autogen.sh
-	./configure --disable-shared
+	./configure --disable-shared --prefix=/
 	make
 	make check
-	make install
+	make install DESTDIR="$INSTALL_DIR"
 	ldconfig
 	;;
 esac
